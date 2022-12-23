@@ -1,0 +1,87 @@
+from tkinter import *
+from tkinter import filedialog as fd
+from PIL import Image, ImageTk
+import numpy as np
+from keras.utils import img_to_array,load_img
+from keras.models import load_model
+
+W = Tk()
+W.geometry('600x600+40+10')
+W.title('nhận nhiện bệnh trên cây táo thông qua lá')
+W.resizable(width=False,height=False)
+label = ['Bị ghẻ','Bị thối đen','Bị gỉ sắt','Cây bình thường']
+model = load_model('nhan_dien_benh_tren_cay_tao.h5')
+
+frame1= Frame(W)
+frame1.pack()
+frame2 = Frame(W)
+frame2.pack()
+frame3 = Frame(W)
+frame3.pack()
+frame4 = Frame(W)
+frame4.pack()
+frame5 = Frame(W)
+frame5.pack()
+
+def get_image(): # lấy ảnh
+    global img
+    filename = fd.askopenfilename(initialdir="/images",
+                                  title='Chọn ảnh',
+                                  filetypes=file_type)
+    img = Image.open(filename)
+    img = img.resize((350,350))
+    img = ImageTk.PhotoImage(img)
+    B['image'] = img
+    path.delete(0,END)
+    path.insert(0, filename)
+
+def predict():  #dự đoán bệnh
+    url = path.get()
+    image= load_img(url,target_size=(200,200))
+    image=img_to_array(image)
+    image=image.astype('float32')
+    image=image.reshape(1,200,200,3)
+    image=image/255
+    a= int(np.argmax(model.predict(image),axis=1))
+    C['text'] = label[a]
+
+# lọc file
+file_type = [('Tất cả file','.*'),('Ảnh','.png'),('Ảnh','.jpg')]
+
+# tiêu đề
+A = Label(frame1,text='Nhận diện sâu bệnh trên cây táo thông qua lá'
+          ,font=("time new roman",20)).pack()
+
+# ô nhập đường dẫn
+path = Entry(frame2,font=("time new roman",13),width=30)
+path.grid(row=0,column=1)
+A2 = Label(frame2,text='Đường dẫn:',font=("time new roman",13))
+A2.grid(row=0,column=0)
+
+# hiển thị hình ảnh
+B = Label(frame4)
+B.grid(row=2,column=0)
+
+# nút chọn file ảnh và dự đoán
+but1 = Button(frame2,text='Chọn ảnh',
+              font=("time new roman",10),width=13,
+              command=get_image)
+but1.grid(row=0,column=2,padx=10)
+but2 = Button(frame3,text='Dự đoán',
+              font=("time new roman",13),width=15,
+              command=predict)
+but2.pack()
+
+# hiển thị loại bệnh
+C = Label(frame5,font=("time new roman",15),width=20)
+C.pack()
+
+# menu
+thanh_menu = Menu(W)
+W.configure(menu=thanh_menu)
+draw_menu = Menu(master=thanh_menu,tearoff=False)
+thanh_menu.add_cascade(label='file',menu=draw_menu)
+draw_menu.add_command(label='exit', command = W.destroy)
+
+mainloop()
+
